@@ -10,6 +10,10 @@ export default async function handler(req, res) {
 
   const { productName, amount, currency, image } = req.body;
 
+  if (!productName || !amount || !currency) {
+    return res.status(400).json({ error: 'Missing required parameters' });
+  }
+
   try {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card', 'blik'],
@@ -19,7 +23,7 @@ export default async function handler(req, res) {
             currency,
             product_data: {
               name: productName,
-              images: [image],
+              ...(image && { images: [image] }),
             },
             unit_amount: amount,
           },
@@ -27,17 +31,17 @@ export default async function handler(req, res) {
         },
       ],
       mode: 'payment',
-      success_url: 'https://dbucha.com/order-success?session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: 'https://dbucha.com/cancel',
-      billing_address_collection: 'required',
       shipping_address_collection: {
-        allowed_countries: ['PL'],
+        allowed_countries: ['PL', 'DE', 'FR', 'IT', 'NL'],
       },
+      billing_address_collection: 'required',
+      success_url: 'https://dbucha.com/order-success?session_id={CHECKOUT_SESSION_ID}',
+      cancel_url: 'https://dbucha.com/order-cancelled',
     });
 
-    res.status(200).json({ url: session.url });
+    return res.status(200).json({ url: session.url });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to create checkout session' });
+    console.error('Stripe session error:', err);
+    return res.status(500).json({ error: 'Failed to create checkout session' });
   }
 }
