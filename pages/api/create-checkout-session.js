@@ -27,17 +27,17 @@ export default async function handler(req, res) {
         },
       ],
       mode: 'payment',
+      success_url: 'https://dbucha.com/order-success?session_id={CHECKOUT_SESSION_ID}',
+      cancel_url: 'https://dbucha.com/cancel',
       billing_address_collection: 'required',
       shipping_address_collection: {
-        allowed_countries: ['PL', 'DE', 'GB', 'FR'],
+        allowed_countries: ['PL'],
       },
-      success_url: 'https://dbucha.com/order-success?session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: 'https://dbucha.com/order-cancelled',
     });
 
     res.status(200).json({ url: session.url });
   } catch (err) {
-    console.error('Stripe session error:', err);
+    console.error(err);
     res.status(500).json({ error: 'Failed to create checkout session' });
   }
 }
